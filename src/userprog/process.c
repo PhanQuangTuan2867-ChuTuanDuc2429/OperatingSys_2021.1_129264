@@ -120,7 +120,7 @@ process_exit (void)
       pagedir_destroy (pd);
     }
       /*Print the information */
-  printf ("%s: exit(%d)\n",thread_name(), 1);//thread_current()->st_exit); 
+  printf ("%s: exit(%d)\n",thread_name(), -1);
 }
 
 /* Sets up the CPU for running user code in the current

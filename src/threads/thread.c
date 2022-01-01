@@ -243,21 +243,19 @@ void
 thread_unblock (struct thread *t) 
 {
   enum intr_level old_level;
-
   ASSERT (is_thread (t));
-
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  //insert the unblocking thread to readylist and sort in order of priority
+  
+  //them thread vao ready list va sap xem theo muc do uu tien
   list_insert_ordered (&ready_list, &t->elem, thread_priority_comparator, NULL);
   t->status = THREAD_READY;
   
-  //ensure preemtion
+  //co che preemtion
   if (thread_current() != idle_thread && thread_current()->priority < t->priority ){
     thread_yield();
     }
-  intr_set_level (old_level);
-  
+  intr_set_level (old_level); 
 }
 
 /* Returns the name of the running thread. */
@@ -299,18 +297,13 @@ void
 thread_exit (void) 
 {
   ASSERT (!intr_context ());
-  //printf ("%s: exit(%d)\n",thread_name(), 1);//thread_current()->st_exit);
 #ifdef USERPROG
-   /*Print the information */
-  //printf ("%s: exit(%d)\n",thread_name(), 1);//thread_current()->st_exit);
-  //printf("process_exit\n");
   process_exit ();
 #endif
 
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
-  //printf("out process_exit\n");
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
@@ -358,36 +351,33 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority)
 {
-  // if the current thread has no donation, then it is normal priority change request.
+  // Neu thread khong di "donate" thi ca priority effective va 
+  // base priority deu = nhau = priority moi
   struct thread *t_current = thread_current();
   if (t_current->priority == t_current->base_priority) {
-    t_current->priority = new_priority;
-    t_current->base_priority = new_priority;   // neccessary due to lock_release would reset effective priority
+    t_current->priority = t_current->base_priority = new_priority;
+  // Quan trong bi khi lock_release se khoi phuc lai effective priority cua thread
   }
-  // otherwise, it has a donation: the original priority only should have changed
+  // Neu co "donation" thi cho base priority cua thread bi thay doi
   else {
    t_current->base_priority = new_priority;
   }
-
-  // if current thread gets its priority decreased, then yield
-  // (foremost entry in ready_list shall have the highest priority)
+  //Neu priority cua thread bi giam di, no phai nhuong CPU cho thread co muc uu tien cao hon
   if (!list_empty (&ready_list)) {
     struct thread *next = list_entry(list_begin(&ready_list), struct thread, elem);
     if (next != NULL && next->priority > new_priority) {
       thread_yield();
     }
   }
-
 }
 /* Let the thread [target] be donated the priority. */
 void
 thread_donate_priority(struct thread *target, int new_priority)
 {
-  // donation : change only current priority
+  // donation : chi thay doi effective priority
   target->priority = new_priority;
 
-  // if current thread gets its priority decreased, then yield
-  // (foremost entry in ready_list shall have the highest priority)
+  //co che preemption
   if (target == thread_current() && !list_empty (&ready_list)) {
     struct thread *next = list_entry(list_begin(&ready_list), struct thread, elem);
     if (next != NULL && next->priority > new_priority) {

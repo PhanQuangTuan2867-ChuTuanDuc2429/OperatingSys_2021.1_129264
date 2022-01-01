@@ -57,7 +57,6 @@ sema_init (struct semaphore *sema, unsigned value)
 void
 sema_down (struct semaphore *sema)
 {
-  printf("sema_down");
   enum intr_level old_level;
 
   ASSERT (sema != NULL);
@@ -67,7 +66,6 @@ sema_down (struct semaphore *sema)
   while (sema->value == 0)
     {  //mot sema co danh sach cac thread (waiters) dang doi no, neu sema=0 thi them thread (goi sema down) do vao waiters va block no 
       list_insert_ordered (&sema->waiters, &thread_current()->elem,thread_priority_comparator, NULL);
-      printf("block");
       thread_block ();
     }
   sema->value--;
@@ -288,7 +286,7 @@ lock_release (struct lock *lock)
   else {
     // donated: lookup the donors, find the highest priority lock
     // then it should be the (newly updated) donated priority of t
-    list_sort(&(t_current->locks), comparator_greater_lock_priority, NULL); // quant trong, truoc khi lay priority cao nhat, can phai sort
+    list_sort(&(t_current->locks), lock_priority_comparator, NULL); // quant trong, truoc khi lay priority cao nhat, can phai sort
     struct lock *highest_lock = list_entry( list_front(&(t_current->locks)), struct lock, lockelem );
     thread_donate_priority(t_current, highest_lock->priority);
 
